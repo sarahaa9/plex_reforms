@@ -203,7 +203,7 @@ estadd local monthfe "Yes"
 estadd local yearfe "Yes"
 
 * Output to LaTeX
-esttab reg1 reg2 reg4 using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms Writing Sample/mpls_results.tex", ///
+esttab reg1 reg2 reg4 using "${overleaf}/mpls_results.tex", ///
     label style(tex) replace ///
     star(* 0.10 ** 0.05 *** 0.01) ///
     b(%9.3f) se(%9.3f) ///
@@ -259,4 +259,4 @@ preserve
 
 restore
 
-graph export "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms Writing Sample/mpls_quarterly_permits.png", replace
+graph export "${overleaf}/mpls_quarterly_permits.png", replace

@@ -185,10 +185,10 @@ lab var five_plus_structures_n  "Five+ Unit Structures - Nor."
 
 ** Summary Statistics Table **
 eststo est1: estpost tabstat total one_unit two_unit three_four_unit five_plus_unit five_plus_structures, c(stat) stat(mean sd min max n)
-cap esttab using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms and Permits/summ_stats.tex", cells("mean(fmt(%13.2fc)) sd(fmt(%13.2fc)) min max count") nonumber nomtitle nonote noobs label booktabs f collabels("Mean" "SD" "Min" "Max" "N")
+cap esttab using "${overleaf}/summ_stats.tex", cells("mean(fmt(%13.2fc)) sd(fmt(%13.2fc)) min max count") nonumber nomtitle nonote noobs label booktabs f collabels("Mean" "SD" "Min" "Max" "N")
 
 
-cap esttab using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms and Permits/summ_stats.tex", ////
+cap esttab using "${overleaf}/summ_stats.tex", ////
              cells("mean(fmt(%6.2fc)) sd(fmt(%6.2fc)) min(fmt(%9.0f)) max(fmt(%9.0fc)) count(fmt(%9.0fc))") nonumber ///
              nomtitle nonote noobs label booktabs ///
              collabels("Mean" "SD" "Min" "Max" "N")  ///
@@ -198,7 +198,7 @@ cap esttab using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Pl
 
 eststo est1: estpost tabstat total_n one_unit_n two_unit_n three_four_unit_n five_plus_unit_n five_plus_structures_n, c(stat) stat(mean sd min max n)
 
-cap esttab using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms and Permits/summ_stats_nor.tex", ////
+cap esttab using "${overleaf}/summ_stats_nor.tex", ////
              cells("mean(fmt(%6.2fc)) sd(fmt(%6.2fc)) min(fmt(%9.0f)) max(fmt(%9.0fc)) count(fmt(%9.0fc))") nonumber ///
              nomtitle nonote noobs label booktabs f ///
              collabels("Mean" "SD" "Min" "Max" "N") replace
@@ -226,7 +226,7 @@ gen cbsa_bal = (t_count == 351)
 
 eststo est1: estpost tabstat total one_unit two_unit three_four_unit five_plus_unit five_plus_structures if cbsa_bal == 1, c(stat) stat(mean sd min max n)
 
-cap esttab using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms and Permits/summ_stats_bal.tex", ////
+cap esttab using "${overleaf}/summ_stats_bal.tex", ////
              cells("mean(fmt(%6.2fc)) sd(fmt(%6.2fc)) min(fmt(%9.0f)) max(fmt(%9.0fc)) count(fmt(%9.0fc))") nonumber ///
              nomtitle nonote noobs label booktabs f ///
              collabels("Mean" "SD" "Min" "Max" "N")  ///
@@ -235,7 +235,7 @@ cap esttab using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Pl
 * Normalized by population
 eststo est1: estpost tabstat total_n one_unit_n two_unit_n three_four_unit_n five_plus_unit_n five_plus_structures_n if cbsa_bal == 1, c(stat) stat(mean sd min max n)
 
-cap esttab using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms and Permits/summ_stats_bal_nor.tex", ////
+cap esttab using "${overleaf}/summ_stats_bal_nor.tex", ////
              cells("mean(fmt(%6.2fc)) sd(fmt(%6.2fc)) min(fmt(%9.0f)) max(fmt(%9.0fc)) count(fmt(%9.0fc))") nonumber ///
              nomtitle nonote noobs label booktabs f ///
              collabels("Mean" "SD" "Min" "Max" "N") replace

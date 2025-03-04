@@ -79,7 +79,6 @@ else {
 
 use "${processed}/permits_working.dta", clear
 
-global overleaf "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms and Permits"
 
 global dynamic_dids = "${overleaf}/Dynamic DiDs/${stamp}"
 
@@ -181,7 +180,7 @@ qui reg total_n c.treated_intens##i.t i.cbsa i.t if in_treatment_group == 1, clu
 est store m4
 
 * Create LaTeX table
-esttab m1 m2 m4 m3 using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms and Permits/results_${timestamp}.tex", ///
+esttab m1 m2 m4 m3 using "${overleaf}/results_${timestamp}.tex", ///
     keep(treated_intens treated) ///
     label ///
     b(%9.3f) se(%9.3f) ///
@@ -233,7 +232,7 @@ qui reg two_unit_n c.treated_intens##i.t i.cbsa i.t if in_treatment_group == 1, 
 est store m4
 
 * Create LaTeX table
-esttab m1 m2 m4 m3 using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms and Permits/duplex_results_${timestamp}.tex", ///
+esttab m1 m2 m4 m3 using "${overleaf}/duplex_results_${timestamp}.tex", ///
     keep(treated_intens treated) ///
     label ///
     b(%9.3f) se(%9.3f) ///

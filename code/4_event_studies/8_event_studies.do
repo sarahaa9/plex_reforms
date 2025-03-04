@@ -174,7 +174,7 @@ foreach y in total_n one_unit_n two_unit_n three_four_unit_n five_plus_unit_n{
                         name(`y', replace) ///
                         note("Only not-yet-treated cities as controls, dropped never-treated cities. No normalization by pre-period mean")
 
-    graph export "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms Writing Sample/eventstudy_`y'_no_norm_only_nyt_cities.png", replace
+    graph export "${overleaf}/eventstudy_`y'_no_norm_only_nyt_cities.png", replace
     pause
 
 }

@@ -75,7 +75,7 @@ label var five_plus_unit_n "5+ Unit"
 eststo est1: estpost tabstat total one_unit two_unit three_four_unit five_plus_unit, c(stat) stat(mean sd min max n)
 
 
-esttab using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms Writing Sample/summ_stats.tex", ////
+esttab using "${overleaf}/summ_stats.tex", ////
              cells("mean(fmt(%9.0fc)) sd(fmt(%9.0fc)) min(fmt(%9.0fc)) max(fmt(%9.0fc)) count(fmt(%9.0fc))") nonumber ///
              nomtitle nonote noobs label booktabs f ///
              collabels("Mean" "SD" "Min" "Max" "N")  ///
@@ -85,7 +85,7 @@ esttab using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex R
 
 eststo est1: estpost tabstat total_n one_unit_n two_unit_n three_four_unit_n five_plus_unit_n, c(stat) stat(mean sd min max n)
 
-esttab using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms Writing Sample/summ_stats_nor.tex", ////
+esttab using "${overleaf}/summ_stats_nor.tex", ////
              cells("mean(fmt(%9.0fc)) sd(fmt(%9.0fc)) min(fmt(%9.0fc)) max(fmt(%9.0fc)) count(fmt(%9.0fc))") nonumber ///
              nomtitle nonote noobs label booktabs f ///
              collabels("Mean" "SD" "Min" "Max" "N") replace
@@ -97,7 +97,7 @@ eststo est1: estpost tabstat total_n one_unit_n two_unit_n three_four_unit_n fiv
         if in_treatment_group == 1 & year < 2019, ///
         statistics(mean sd min max count) columns(statistics)
         
-esttab using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms Writing Sample/summ_stats_treat.tex", ///
+esttab using "${overleaf}/summ_stats_treat.tex", ///
         cells("mean(fmt(%9.0fc)) sd(fmt(%9.0fc)) min(fmt(%9.0fc)) max(fmt(%9.0fc)) count(fmt(%9.0fc))") nonumber ///
         nomtitle nonote noobs label fragment plain ///
         collabels(none) ///
@@ -109,7 +109,7 @@ eststo est1: estpost tabstat total_n one_unit_n two_unit_n three_four_unit_n fiv
         if in_treatment_group == 0 & year < 2019, ///
         statistics(mean sd min max count) columns(statistics)
         
-esttab using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms Writing Sample/summ_stats_control.tex", ///
+esttab using "${overleaf}/summ_stats_control.tex", ///
         cells("mean(fmt(%9.0fc)) sd(fmt(%9.0fc)) min(fmt(%9.0fc)) max(fmt(%9.0fc)) count(fmt(%9.0fc))") nonumber ///
         nomtitle nonote noobs label fragment plain ///
         collabels(none) ///

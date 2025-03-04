@@ -121,11 +121,7 @@ keep if ever_treated == 1 | neighbor == 1
 reghdfe permits100k treatment_intensity, absorb(cbsa_id year) cluster(cbsa_id) */
 
 preserve
-    use "/Users/sarah/Downloads/WRLURI_01_15_2020.dta", clear
-
-    * First, collapse WRLURI to CBSA level by taking average
-    collapse (mean) WRLURI18, by(cbsacode18)
-    ren cbsacode18 cbsa
+    use "${processed}/wrluri_cbsa.dta", clear
 
     * Save CBSA-level WRLURI scores
     tempfile wrluri_cbsa
@@ -193,7 +189,7 @@ foreach y in total_n one_unit_n two_unit_n three_four_unit_n five_plus_unit_n mu
 
 
     * Create LaTeX table
-    esttab m1 m4 m6 m7 m3 using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms Writing Sample/yearly_`title'_results_${timestamp}.tex", ///
+    esttab m1 m4 m6 m7 m3 using "${overleaf}/yearly_`title'_results_${timestamp}.tex", ///
         keep(treat_intens treated) ///
         label ///
         b(%9.3f) se(%9.3f) ///
@@ -270,7 +266,7 @@ foreach y in total one_unit two_unit three_four_unit five_plus_unit multi_unit{
 
 
     * Create LaTeX table
-    esttab m1 m4 m6 m7 m3 using "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms Writing Sample/logs_yearly_`title'_results_${timestamp}_ihs_norm.tex", ///
+    esttab m1 m4 m6 m7 m3 using "${overleaf}/logs_yearly_`title'_results_${timestamp}_ihs_norm.tex", ///
         keep(treat_intens treated) ///
         label ///
         b(%9.3f) se(%9.3f) ///
