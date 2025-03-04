@@ -113,8 +113,6 @@ gen is_pmsa = 0
 * Use regular expressions to identify the variations of PMSA
 replace is_pmsa = 1 if regexm(msa, "^(.*?)( P\s*M\s*S\s*A$)")
 
-drop is_pmsa
-
 gen is_cmsa = 0
 replace is_cmsa = 1 if regexm(msa, "^(.*?)( C\s*M\s*S\s*A$)")
 
@@ -223,11 +221,9 @@ gen hyphen_pos = strpos(substr(msa, 1, 7), "-")
 
 * Generate the variable with all characters before the hyphen
 gen msa_prefix = substr(msa, 1, hyphen_pos - 1) if hyphen_pos > 0
-drop hyphen_pos
 
 gen msa_cut = substr(msa, 1, 7)
 replace msa_cut = msa_prefix if !missing(msa_prefix) // if msa_cut has a hyphen in it
-drop msa_prefix
 
 * Find the position of the first space
 gen space_pos = strpos(msa, " ")
@@ -236,7 +232,6 @@ gen space_pos = strpos(msa, " ")
 gen name_prefix = substr(msa, 1, space_pos - 1) if space_pos > 0
 
 replace msa_cut = name_prefix if length(msa) <= 7
-drop name_prefix
 replace msa_cut = trim(msa_cut)
 
 
