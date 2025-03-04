@@ -61,6 +61,7 @@ if $run_setup == 1 {
     global figures "$projdir/output/figures"
     global results "$projdir/output/results"
     global documentation "$projdir/documentation"
+    global overleaf "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Sarah Aaronson/Apps/Overleaf/Plex Reforms Writing Sample"
 
     * Create logs directory first
     capture mkdir "$projdir/logs"
@@ -75,12 +76,12 @@ if $run_setup == 1 {
     log using "$projdir/logs/master_log_`c(current_date)'.log", replace
     
     * Create directories if they don't exist
-    capture mkdir "$projdir/code/scripts_plex_reforms/1_data_cleaning"
-    capture mkdir "$projdir/code/scripts_plex_reforms/2_descriptive"
-    capture mkdir "$projdir/code/scripts_plex_reforms/3_analysis"
-    capture mkdir "$projdir/code/scripts_plex_reforms/4_event_studies"
-    capture mkdir "$projdir/code/scripts_plex_reforms/5_city_specific"
-    capture mkdir "$projdir/code/scripts_plex_reforms/6_robustness"
+    capture mkdir "$projdir/plex_reforms/code/1_data_cleaning"
+    capture mkdir "$projdir/plex_reforms/code/2_descriptive"
+    capture mkdir "$projdir/plex_reforms/code/3_analysis"
+    capture mkdir "$projdir/plex_reforms/code/4_event_studies"
+    capture mkdir "$projdir/plex_reforms/code/5_city_specific"
+    capture mkdir "$projdir/plex_reforms/code/6_robustness"
     
     capture mkdir "$processed"
     capture mkdir "$processed/permits"
@@ -102,23 +103,23 @@ if $run_clean == 1 {
     
     * 2a. Clean monthly permit data from text files
     di "Cleaning permit data from text files..."
-    do "$projdir/code/scripts_plex_reforms/1_data_cleaning/1a_permit_data_cleaning.do"
+    do "$projdir/plex_reforms/code/1_data_cleaning/1a_permit_data_cleaning.do"
     
     * 2b. Clean monthly permit data from Excel files
     di "Cleaning permit data from Excel files..."
-    do "$projdir/code/scripts_plex_reforms/1_data_cleaning/1b_permit_data_cleaning_excel.do"
+    do "$projdir/plex_reforms/code/1_data_cleaning/1b_permit_data_cleaning_excel.do"
     
     * 2c. Harmonize text files
     di "Harmonizing text files..."
-    do "$projdir/code/scripts_plex_reforms/1_data_cleaning/1c_text_file_harmonizing.do"
+    do "$projdir/plex_reforms/code/1_data_cleaning/1c_text_file_harmonizing.do"
     
     * 2d. Process population data
     di "Processing population data..."
-    do "$projdir/code/scripts_plex_reforms/1_data_cleaning/1d_population_data.do"
+    do "$projdir/plex_reforms/code/1_data_cleaning/1d_population_data.do"
     
     * 2e. Process WRLURI data
     di "Processing WRLURI data..."
-    do "$projdir/code/scripts_plex_reforms/1_data_cleaning/1e_wrluri_data.do"
+    do "$projdir/plex_reforms/code/1_data_cleaning/1e_wrluri_data.do"
     
     di "Data cleaning completed."
 }
@@ -131,19 +132,19 @@ if $run_describe == 1 {
     
     * 3a. Basic permit statistics
     di "Generating permit statistics..."
-    do "$projdir/code/scripts_plex_reforms/2_descriptive/2_permit_desc.do"
+    do "$projdir/plex_reforms/code/2_descriptive/2_permit_desc.do"
     
     * 3b. Aggregate to yearly level
     di "Aggregating to yearly level..."
-    do "$projdir/code/scripts_plex_reforms/2_descriptive/2b_yearly_data.do"
+    do "$projdir/plex_reforms/code/2_descriptive/2b_yearly_data.do"
     
     * 3c. Descriptive statistics for yearly data
     di "Generating yearly statistics..."
-    do "$projdir/code/scripts_plex_reforms/2_descriptive/2c_yearly_desc.do"
+    do "$projdir/plex_reforms/code/2_descriptive/2c_yearly_desc.do"
     
     * 3d. Test parallel trends assumption
     di "Testing parallel trends..."
-    do "$projdir/code/scripts_plex_reforms/2_descriptive/2d_parallel_trends.do"
+    do "$projdir/plex_reforms/code/2_descriptive/2d_parallel_trends.do"
     
     di "Descriptive analysis completed."
 }
@@ -156,15 +157,15 @@ if $run_main_analysis == 1 {
     
     * 4a. Simple difference-in-differences models
     di "Running simple DiD models..."
-    do "$projdir/code/scripts_plex_reforms/3_analysis/3_simple_did.do"
+    do "$projdir/plex_reforms/code/3_analysis/3_simple_did.do"
     
     * 4b. DiD models with treatment intensity
     di "Running DiD models with intensity..."
-    do "$projdir/code/scripts_plex_reforms/3_analysis/4_did_intensity.do"
+    do "$projdir/plex_reforms/code/3_analysis/4_did_intensity.do"
     
     * 4c. Yearly regression specifications
     di "Running yearly regressions..."
-    do "$projdir/code/scripts_plex_reforms/3_analysis/5_yearly_regressions.do"
+    do "$projdir/plex_reforms/code/3_analysis/5_yearly_regressions.do"
     
     di "Main analysis completed."
 }
@@ -177,11 +178,11 @@ if $run_event_studies == 1 {
     
     * 5a. Analyze changes in permit activity
     di "Analyzing delta permits..."
-    do "$projdir/code/scripts_plex_reforms/4_event_studies/7_delta_permits.do"
+    do "$projdir/plex_reforms/code/4_event_studies/7_delta_permits.do"
     
     * 5b. Run event study specifications
     di "Running event studies..."
-    do "$projdir/code/scripts_plex_reforms/4_event_studies/8_event_studies.do"
+    do "$projdir/plex_reforms/code/4_event_studies/8_event_studies.do"
     
     di "Event studies completed."
 }
@@ -194,18 +195,18 @@ if $run_city_analysis == 1 {
     
     * Minneapolis
     di "Analyzing Minneapolis..."
-    do "$projdir/code/scripts_plex_reforms/5_city_specific/minneapolis.do"
-    do "$projdir/code/scripts_plex_reforms/5_city_specific/minneapolis_bldg_permits.do"
+    do "$projdir/plex_reforms/code/5_city_specific/minneapolis.do"
+    do "$projdir/plex_reforms/code/5_city_specific/minneapolis_bldg_permits.do"
     
     * Other cities
     di "Analyzing other cities..."
-    do "$projdir/code/scripts_plex_reforms/5_city_specific/charlottesville.do"
-    do "$projdir/code/scripts_plex_reforms/5_city_specific/durham.do"
-    do "$projdir/code/scripts_plex_reforms/5_city_specific/portland.do"
-    do "$projdir/code/scripts_plex_reforms/5_city_specific/raleigh.do"
-    do "$projdir/code/scripts_plex_reforms/5_city_specific/san_francisco.do"
-    do "$projdir/code/scripts_plex_reforms/5_city_specific/spokane.do"
-    do "$projdir/code/scripts_plex_reforms/5_city_specific/walla_walla.do"
+    do "$projdir/plex_reforms/code/5_city_specific/charlottesville.do"
+    do "$projdir/plex_reforms/code/5_city_specific/durham.do"
+    do "$projdir/plex_reforms/code/5_city_specific/portland.do"
+    do "$projdir/plex_reforms/code/5_city_specific/raleigh.do"
+    do "$projdir/plex_reforms/code/5_city_specific/san_francisco.do"
+    do "$projdir/plex_reforms/code/5_city_specific/spokane.do"
+    do "$projdir/plex_reforms/code/5_city_specific/walla_walla.do"
     
     di "City-specific analysis completed."
 }
@@ -218,11 +219,11 @@ if $run_robustness == 1 {
     
     * 7a. Create visualizations of treated cities
     di "Creating treated city graphs..."
-    do "$projdir/code/scripts_plex_reforms/6_robustness/6_treated_city_graphs.do"
+    do "$projdir/plex_reforms/code/6_robustness/6_treated_city_graphs.do"
     
     * 7b. Monthly visualizations
     di "Creating monthly visualizations..."
-    do "$projdir/code/scripts_plex_reforms/6_robustness/6b_treated_city_graphs_monthly.do"
+    do "$projdir/plex_reforms/code/6_robustness/6b_treated_city_graphs_monthly.do"
     
     di "Robustness checks completed."
 }
