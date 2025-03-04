@@ -56,25 +56,15 @@ capture mkdir "$results"
 * Set preferences
 set more off
 
-use "/Users/sarah/Downloads/WRLURI_01_15_2020.dta", clear
+* Load WRLURI data
+use "${raw_data}/WRLURI_01_15_2020.dta", clear
 
 * First, collapse WRLURI to CBSA level by taking average
 collapse (mean) WRLURI18, by(cbsacode18)
+rename cbsacode18 cbsa
 
 * Save CBSA-level WRLURI scores
-tempfile wrluri_cbsa
-save `wrluri_cbsa'
+save "${processed}/wrluri_cbsa.dta", replace
 
-* Merge back to your main dataset
-use main_data, clear
-merge m:1 cbsa using `wrluri_cbsa'
-
-* Create WRLURI quartiles/groups
-xtile wrluri_group = wrluri_score, nq(4)
-
-* Only keep control CBSAs in same WRLURI quartile as treated CBSAs
-bysort wrluri_group: egen any_treated = max(ever_treated)
-keep if ever_treated == 1 | (ever_treated == 0 & any_treated == 1)
-
-* Run your main specification on this subset
-reghdfe permits100k treatment_intensity, absorb(cbsa_id year) cluster(cbsa_id)
+* Display completion message
+di "WRLURI data processed and saved to $processed/wrluri_cbsa.dta"
