@@ -1,0 +1,63 @@
+from qgis.gui import QgsMapToolIdentify
+from qgis.core import QgsVectorLayer, QgsPointXY, QgsRectangle
+from qgis.utils import iface
+
+# Get the active layer
+layer = iface.activeLayer()
+print("Active layer:", layer.name())
+
+# Start editing
+layer.startEditing()
+print("Started editing")
+
+# Get the hex_code field index
+hex_idx = layer.fields().indexOf('hex_code')
+print("Hex code field index:", hex_idx)
+
+# Create identify tool
+identify_tool = QgsMapToolIdentify(iface.mapCanvas())
+print("Created identify tool")
+
+# Get the map canvas
+canvas = iface.mapCanvas()
+
+# Counter for testing
+test_count = 0
+
+# Loop through features
+for feature in layer.getFeatures():
+    if test_count >= 5:  # Stop after 5 features
+        break
+        
+    print(f"\nProcessing feature {feature.id()}")
+    
+    # Get feature's centroid
+    centroid = feature.geometry().centroid().asPoint()
+    
+    # Convert geometry coordinates to map canvas coordinates
+    point = canvas.getCoordinateTransform().transform(centroid)
+    
+    print("Attempting to identify features...")
+    # Perform identify using transformed coordinates
+    results = identify_tool.identify(point.x(), point.y(), [layer], QgsMapToolIdentify.TopDownAll)
+    
+    if len(results) > 0:
+        # Process results
+        for result in results:
+            attrs = result.mDerivedAttributes
+            if 'Embedded Symbol' in attrs:
+                embedded_symbol = attrs['Embedded Symbol']
+                if 'Fill (#' in embedded_symbol:
+                    hex_code = embedded_symbol[embedded_symbol.find('#'):embedded_symbol.find(')')]
+                    # Update the feature's hex_code field
+                    layer.changeAttributeValue(feature.id(), hex_idx, hex_code)
+                    print(f"Feature {feature.id()}: Found hex code {hex_code}")
+    else:
+        print("No results found for this feature")
+    
+    test_count += 1
+
+# Commit the changes
+layer.commitChanges()
+
+print("\nTest complete!")
