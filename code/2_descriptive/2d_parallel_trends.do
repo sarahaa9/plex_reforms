@@ -16,7 +16,7 @@ if "$projdir" == "" {
 
 * Define main subdirectories
 global raw_data "$projdir/data/raw"
-global processed "$projdir/processed"
+global processed "$projdir/data/processed"
 global graphs "$projdir/graphs"
 global scripts "$projdir/scripts"
 global scripts_plex_reforms "$projdir/scripts_plex_reforms"
@@ -57,7 +57,6 @@ capture mkdir "$results"
 set more off
 
 use "${processed}/permits_working_yearly.dta", clear
-
 
 * Create mean residuals by treatment status and year
 collapse (mean) total_n, by(in_treatment_group year)
