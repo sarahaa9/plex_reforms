@@ -107,3 +107,8 @@ gen percent_x_weight = res_percent * weight if weight != -1
 
 egen intensity = total(percent_x_weight)
 sum intensity
+local intensity = r(mean)
+
+return scalar intensity = `intensity'
+return scalar cbsa_code = 38900
+return scalar reform_date = "8/1/2021"

@@ -56,7 +56,7 @@ capture mkdir "$results"
 * Set preferences
 set more off
 
-import delimited using "$processed}/area/durham_intersection_w_tiers.csv", clear
+import delimited using "${processed}/area/durham_intersection_w_tiers.csv", clear
 
 ren type tier
 
@@ -84,3 +84,9 @@ gen res_percent = area_inter / tot_res_area if both_res == 1
 gen percent_x_weight = res_percent * weight if weight != -1
 
 egen intensity = total(percent_x_weight)
+sum intensity
+local intensity = r(mean)
+
+return scalar intensity = `intensity'
+return scalar cbsa_code = 20500
+return scalar reform_date = "10/15/2019"

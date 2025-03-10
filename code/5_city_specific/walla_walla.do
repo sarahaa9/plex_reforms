@@ -181,3 +181,10 @@ gen percent_x_weight_no_rm = res_percent_no_rm * weight if weight != -1 & res_no
 
 egen intensity_no_rm = total(percent_x_weight_no_rm)
 sum intensity_no_rm
+
+sum intensity
+local intensity = r(mean)
+
+return scalar intensity = `intensity'
+return scalar cbsa_code = 47460
+return scalar reform_date = "1/2/2019"

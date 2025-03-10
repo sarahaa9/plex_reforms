@@ -56,7 +56,7 @@ capture mkdir "$results"
 * Set preferences
 set more off
 
-import excel using "$processed}/area/minneapolis_pre_parcels.xlsx", clear firstrow
+import excel using "${processed}/area/minneapolis_pre_parcels.xlsx", clear firstrow
 
 destring APN, generate(apn_clean2)
 drop APN
@@ -152,6 +152,11 @@ gen percent_x_weight = res_percent * weight if weight != -1
 
 egen intensity = total(percent_x_weight)
 sum intensity
+local intensity = r(mean)
+
+return scalar intensity = `intensity'
+return scalar cbsa_code = 33460
+return scalar reform_date = "1/1/2020"
 
 save "${processed}/area/mpls_parcels_zoning_pre_post", replace
 
