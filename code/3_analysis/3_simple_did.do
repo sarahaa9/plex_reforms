@@ -79,8 +79,6 @@ else {
 
 use "${processed}/permits_working.dta", clear
 
-global overleaf "/Users/sarah/Library/CloudStorage/Dropbox-MIT/Apps/Overleaf/Plex Reforms and Permits"
-
 global dynamic_dids = "${overleaf}/Dynamic DiDs/${stamp}"
 
 cap mkdir "${dynamic_dids}"
@@ -126,40 +124,34 @@ replace comb_treated = 0 if treated == 0
 
 lab var comb_treated "Not-Yet-Treated and Never Treated as Controls"
 
+* Use treatment data
+merge m:1 cbsa using "${processed}/treatment_intensities.dta", keep(match master) nogenerate
 
-/* Rough add of intensity */
+* Initialize treatment variables
+gen treated = 0
+gen in_treatment_group = 0
+gen treated_year = 0
+gen treated_intens = 1  // Default for untreated
 
-gen treated_intens = .
-
-replace treated_intens = 3.522699 if strpos(msa, "San Francisco") & strpos(msa, "CA") & t > ym(2022, 10)
-replace treated_year = 1 if strpos(msa, "San Francisco") & strpos(msa, "CA") & year > 2022
-replace in_treatment_group = 1 if strpos(msa, "San Francisco") & strpos(msa, "CA")
-
-replace treated_intens = 1.880045  if strpos(msa, "Richfield") & strpos(msa, "MN") & t > ym(2023, 1)
-replace treated_year = 1 if strpos(msa, "Richfield") & strpos(msa, "MN") & year > 2023
-replace in_treatment_group = 1 if strpos(msa, "Richfield") & strpos(msa, "MN")
-
-replace treated_intens = 1.066261 if strpos(msa, "Durham") & strpos(msa, "NC") & t > ym(2019, 10)
-replace treated_year = 1 if strpos(msa, "Durham") & strpos(msa, "NC") & year > 2019
-replace in_treatment_group = 1 if strpos(msa, "Durham") & strpos(msa, "NC")
-
-replace treated_intens = 1.939016 if strpos(msa, "Raleigh") & strpos(msa, "NC") & t > ym(2021, 6)
-replace treated_year = 1 if strpos(msa, "Raleigh") & strpos(msa, "NC") & year > 2021
-replace in_treatment_group = 1 if strpos(msa, "Raleigh") & strpos(msa, "NC")
-
-replace treated_intens = 5.20324 if strpos(msa, "Portland") & strpos(msa, "OR") & t > ym(2020, 8)
-replace treated_year = 1 if strpos(msa, "Portland") & strpos(msa, "OR") & year > 2020
-replace in_treatment_group = 1 if strpos(msa, "Portland") & strpos(msa, "OR")
-
-replace treated_intens = 3.202148 if strpos(msa, "Charlottesville") & strpos(msa, "VA") & t > ym(2021, 11)
-replace treated_year = 1 if strpos(msa, "Charlottesville") & strpos(msa, "VA") & year > 2021
-replace in_treatment_group = 1 if strpos(msa, "Charlottesville") & strpos(msa, "VA")
-
-replace treated_intens = 13.89574 if strpos(msa, "Walla Walla") & strpos(msa, "WA") & t > ym(2018, 12)
-replace treated_year = 1 if strpos(msa, "Walla Walla") & strpos(msa, "WA") & year > 2018
-replace in_treatment_group = 1 if strpos(msa, "Walla Walla") & strpos(msa, "WA")
-
-replace treated_intens = treated if missing(treated_intens)
+* Apply treatment based on consolidated data
+levelsof cbsa if !missing(treat_intens), local(treated_cbsas)
+foreach c of local treated_cbsas {
+    * Get values for this CBSA
+    sum treat_intens if cbsa == `c', meanonly
+    local intensity = r(mean)
+    
+    sum reform_year if cbsa == `c', meanonly
+    local ref_year = r(mean)
+    
+    sum reform_month if cbsa == `c', meanonly
+    local ref_month = r(mean)
+    
+    * Apply treatment
+    replace treated = 1 if cbsa == `c' & t > ym(`ref_year', `ref_month')
+    replace treated_year = 1 if cbsa == `c' & year > `ref_year'
+    replace in_treatment_group = 1 if cbsa == `c'
+    replace treated_intens = `intensity' if cbsa == `c' & t > ym(`ref_year', `ref_month')
+}
 
 xtreg total_n treated_intens, r fe
 

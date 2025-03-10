@@ -95,71 +95,34 @@ replace comb_treated = 0 if treated == 0
 
 lab var comb_treated "Not-Yet-Treated and Never Treated as Controls"
 
+* Use treatment data
+merge m:1 cbsa using "${processed}/treatment_intensities.dta", keep(match master) nogenerate
 
-/* Rough add of intensity */
+* Initialize treatment variables
+gen treated = 0
+gen in_treatment_group = 0
+gen treated_year = 0
+gen treated_intens = 1  // Default for untreated
 
-gen treat_intens = 1
-gen treat_intensm1 = 1
-gen treat_intensm2 = 1
-gen reform_year = .
-
-label var treat_intens "Treatment Intensity"
-label var treat_intensm1 "Treatment Intensity - Monthly"
-label var treat_intensm2 "Treatment Intensity - Monthly"
-label var treated "Treatment Dummy"
-
-replace in_treatment_group = 0
-replace treated_year = 0
-
-replace treat_intens = 3.522699 if cbsa == 41860 & year > 2022 // SF
-replace treat_intensm1 = 3.522699 if cbsa == 41860 & t > ym(2022, 10) // SF
-replace treat_intensm2 = 3.522699 if cbsa == 41860 & t >= ym(2022, 10) // SF
-replace treated_year = 1 if cbsa == 41860 & year > 2022
-replace in_treatment_group = 1 if cbsa == 41860
-replace reform_year = 2022 if cbsa == 41860
-
-replace treat_intens = 1.066261 if cbsa == 20500 & year > 2019 // Durham
-replace treat_intensm1 = 1.066261 if cbsa == 20500 & t > ym(2019, 10) // Durham
-replace treat_intensm2 = 1.066261 if cbsa == 20500 & t >= ym(2019, 10) // Durham
-replace treated_year = 1 if cbsa == 20500 & year > 2019
-replace in_treatment_group = 1 if cbsa == 20500
-replace reform_year = 2019 if cbsa == 20500
-
-replace treat_intens = 1.939016 if cbsa == 39580 & year > 2021 // Raleigh
-replace treat_intensm1 = 1.939016 if cbsa == 39580 & t > ym(2021, 8) // Raleigh
-replace treat_intensm2 = 1.939016 if cbsa == 39580 & t >= ym(2021, 8) // Raleigh
-replace treated_year = 1 if cbsa == 39580 & year > 2021
-replace in_treatment_group = 1 if cbsa == 39580
-replace reform_year = 2021 if cbsa == 39580
-
-replace treat_intens = 5.20324 if cbsa == 38900 & year > 2021 // Portland
-replace treat_intensm1 = 5.20324 if cbsa == 38900 & t > ym(2021, 8) // Portland
-replace treat_intensm2 = 5.20324 if cbsa == 38900 & t >= ym(2021, 8) // Portland
-replace treated_year = 1 if cbsa == 38900 & year > 2021
-replace in_treatment_group = 1 if cbsa == 38900
-replace reform_year = 2021 if cbsa == 38900
-
-replace treat_intens = 13.89574 if cbsa == 47460 & year >= 2019 // Walla Walla, reform was in January
-replace treat_intensm1 = 13.89574 if cbsa == 47460 & t > ym(2019, 1) // Walla Walla
-replace treat_intensm2 = 13.89574 if cbsa == 47460 & t >= ym(2019, 1) // Walla Walla
-replace treated_year = 1 if cbsa == 47460 & year > 2019
-replace in_treatment_group = 1 if cbsa == 47460
-replace reform_year = 2018 if cbsa == 47460 // reform was in January
-
-replace treat_intens = 1.101785181 if cbsa == 24340 & year > 2019 // Grand Rapids
-replace treated_year = 1 if cbsa == 24340 & year > 2019
-replace in_treatment_group = 1 if cbsa == 24340
-replace reform_year = 2019 if cbsa == 24340
-
-replace treat_intens = 3.235316 if cbsa == 44060 & year > 2022 // Spokane
-replace treated_year = 1 if cbsa == 44060 & year > 2022
-replace in_treatment_group = 1 if cbsa == 44060
-replace reform_year = 2022 if cbsa == 44060
-
-replace treat_intens = 2.145964 if cbsa == 33460 & year >= 2020 // Minneapolis, reform was in January
-replace treated_year = 1 if cbsa == 33460 & year >= 2020
-replace in_treatment_group = 1 if cbsa == 33460
-replace reform_year = 2019 if cbsa == 33460 // reform was in january
+* Apply treatment based on consolidated data
+levelsof cbsa if !missing(treat_intens), local(treated_cbsas)
+foreach c of local treated_cbsas {
+    * Get values for this CBSA
+    sum treat_intens if cbsa == `c', meanonly
+    local intensity = r(mean)
+    
+    sum reform_year if cbsa == `c', meanonly
+    local ref_year = r(mean)
+    
+    sum reform_month if cbsa == `c', meanonly
+    local ref_month = r(mean)
+    
+    * Apply treatment
+    replace treated = 1 if cbsa == `c' & t > ym(`ref_year', `ref_month')
+    replace treated_year = 1 if cbsa == `c' & year > `ref_year'
+    replace in_treatment_group = 1 if cbsa == `c'
+    replace treated_intens = `intensity' if cbsa == `c' & t > ym(`ref_year', `ref_month')
+}
 
 gen post = (year > reform_year)
 
