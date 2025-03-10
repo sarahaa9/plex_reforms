@@ -29,11 +29,11 @@ To run only specific sections, modify the switches below.
 global projdir "/Users/sarah/Desktop/Research/Land Use Regulation"
 
 * Section switches (set to 1 to run, 0 to skip)
-global run_setup = 1
-global run_clean = 1 
-global run_describe = 1
-global run_main_analysis = 1
-global run_event_studies = 1
+global run_setup = 0
+global run_clean = 0
+global run_describe = 0
+global run_main_analysis = 0
+global run_event_studies = 0
 global run_city_analysis = 1
 global run_robustness = 1
 
