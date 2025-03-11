@@ -97,48 +97,34 @@ collapse (sum) total one_unit two_unit three_four_unit five_plus_unit total_n on
 
 drop if year == 2024 // 349 observations deleted
 
-/* Rough add of intensity */
+* Use treatment data
+merge m:1 cbsa using "${processed}/treatment_intensities.dta", keep(match master) nogenerate
 
-gen treat_intens = 1
-gen reform_year = .
+* Initialize treatment variables
+gen treated = 0
 gen in_treatment_group = 0
+gen treated_year = 0
+gen treated_intens = 1  // Default for untreated
 
-label var treat_intens "Treatment Intensity"
-
-replace treat_intens = 3.522699 if cbsa == 41860 & year > 2022 // SF
-replace in_treatment_group = 1 if cbsa == 41860
-replace reform_year = 2022 if cbsa == 41860
-
-replace treat_intens = 1.066261 if cbsa == 20500 & year > 2019 // Durham
-replace in_treatment_group = 1 if cbsa == 20500
-replace reform_year = 2019 if cbsa == 20500
-
-replace treat_intens = 1.939016 if cbsa == 39580 & year > 2021 // Raleigh
-replace in_treatment_group = 1 if cbsa == 39580
-replace reform_year = 2021 if cbsa == 39580
-
-replace treat_intens = 5.20324 if cbsa == 38900 & year > 2021 // Portland
-replace in_treatment_group = 1 if cbsa == 38900
-replace reform_year = 2021 if cbsa == 38900
-
-replace treat_intens = 13.89574 if cbsa == 47460 & year >= 2019 // Walla Walla, reform was in January
-replace in_treatment_group = 1 if cbsa == 47460
-replace reform_year = 2018 if cbsa == 47460 // reform was in January
-
-replace treat_intens = 1.101785181 if cbsa == 24340 & year > 2019 // Grand Rapids
-replace in_treatment_group = 1 if cbsa == 24340
-replace reform_year = 2019 if cbsa == 24340
-
-replace treat_intens = 3.235316 if cbsa == 44060 & year > 2022 // Spokane
-replace in_treatment_group = 1 if cbsa == 44060
-replace reform_year = 2022 if cbsa == 44060
-
-replace treat_intens = 2.145964 if cbsa == 33460 & year >= 2020 // Minneapolis, reform was in January
-replace in_treatment_group = 1 if cbsa == 33460
-replace reform_year = 2019 if cbsa == 33460 // reform was in january
-
-replace in_treatment_group = 1 if cbsa == 40340 // Rochester
-replace reform_year = 2022 if cbsa == 40340 // reform was in January 2023
+* Apply treatment based on consolidated data
+levelsof cbsa if !missing(treat_intens), local(treated_cbsas)
+foreach c of local treated_cbsas {
+    * Get values for this CBSA
+    sum treat_intens if cbsa == `c', meanonly
+    local intensity = r(mean)
+    
+    sum reform_year if cbsa == `c', meanonly
+    local ref_year = r(mean)
+    
+    sum reform_month if cbsa == `c', meanonly
+    local ref_month = r(mean)
+    
+    * Apply treatment
+    replace treated = 1 if cbsa == `c' & t > ym(`ref_year', `ref_month')
+    replace treated_year = 1 if cbsa == `c' & year > `ref_year'
+    replace in_treatment_group = 1 if cbsa == `c'
+    replace treated_intens = `intensity' if cbsa == `c' & t > ym(`ref_year', `ref_month')
+}
 
 gen post = (year > reform_year)
 

@@ -124,8 +124,6 @@ local median_treat_year = r(mean)
 
 drop if in_treatment_group == 0
 
-*replace treat_intens = 4 if cbsa == 47460 & year >= 2019
-
 foreach y in total_n one_unit_n two_unit_n three_four_unit_n five_plus_unit_n{
 
     * Create relative time for controls based on this median

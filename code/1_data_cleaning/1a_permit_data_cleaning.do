@@ -58,7 +58,6 @@ set more off
 
 forvalues y = 1995(1)2019{
 	foreach m in 01 02 03 04 05 06 07 08 09 10 11 12{
-		di in red "The year is `y' and the month is `m'"
 		
 		if `y' == 2019 & `m' >= 11{
 			continue
@@ -186,7 +185,6 @@ forvalues y = 1995(1)2019{
 		capture confirm variable v1
 		
 		if (_rc == 0) == 1{
-			di in red "is this happening"
 			gen msa = v1
 			order msa
 			missings dropvars v1, force
@@ -350,8 +348,6 @@ forvalues y = 1995(1)2019{
 		missings dropvars _all, force
 		
 		drop if missing(msa) & missing(total) & missing(one_unit) & missing(two_unit) & missing(three_four_unit) & missing(five_plus_unit) & missing(five_plus_structures)
-		di in red "before dealing with the names split between two rows"
-		pause 
 		
 		gen n = _n
 		sum n

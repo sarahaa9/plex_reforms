@@ -184,15 +184,35 @@ foreach y in total one_unit two_unit three_four_unit five_plus_unit multi_unit{
         replace coef = `base_effect' + `mpls_effect' if cbsa == 33460 // Minneapolis
         replace coef = `base_effect' + `spk_effect' if cbsa == 44060 // Spokane
         replace coef = `base_effect' if cbsa == 20500   // Durham (just base effect)
-        
-        replace treat_intens = 5.20324 if cbsa == 38900   // Portland
-        replace treat_intens = 1.939016 if cbsa == 39580  // Raleigh
-        replace treat_intens = 3.522699 if cbsa == 41860  // SF
-        replace treat_intens = 13.89574 if cbsa == 47460  // Walla Walla
-        replace treat_intens = 1.066261 if cbsa == 20500  // Durham
-        replace treat_intens = 1.101785181 if cbsa == 24340 // Grand Rapids
-        replace treat_intens = 2.145964 if cbsa == 33460 // Minneapolis
-        replace treat_intens = 3.235316 if cbsa == 44060 // Spokane
+
+        * Use treatment data
+        merge m:1 cbsa using "${processed}/treatment_intensities.dta", keep(match master) nogenerate
+
+        * Initialize treatment variables
+        gen treated = 0
+        gen in_treatment_group = 0
+        gen treated_year = 0
+        gen treated_intens = 1  // Default for untreated
+
+        * Apply treatment based on consolidated data
+        levelsof cbsa if !missing(treat_intens), local(treated_cbsas)
+        foreach c of local treated_cbsas {
+            * Get values for this CBSA
+            sum treat_intens if cbsa == `c', meanonly
+            local intensity = r(mean)
+            
+            sum reform_year if cbsa == `c', meanonly
+            local ref_year = r(mean)
+            
+            sum reform_month if cbsa == `c', meanonly
+            local ref_month = r(mean)
+            
+            * Apply treatment
+            replace treated = 1 if cbsa == `c' & t > ym(`ref_year', `ref_month')
+            replace treated_year = 1 if cbsa == `c' & year > `ref_year'
+            replace in_treatment_group = 1 if cbsa == `c'
+            replace treated_intens = `intensity' if cbsa == `c' & t > ym(`ref_year', `ref_month')
+        }
 
         label define cbsa 47460 "Walla Walla" 38900 "Portland, OR" 39580 "Raleigh" 20500 "Durham" ///
                           41860 "San Francisco" 24340 "Grand Rapids" 33460 "Minneapolis" 44060 "Spokane"
