@@ -247,7 +247,6 @@ order msa groups primary_state observations
 sum groups
 * `r(max)'
 forvalues i = 1(1)76 {
-	di in red "i is `i'"
 	tab msa if groups == `i'
 }
 
