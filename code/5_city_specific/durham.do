@@ -1,3 +1,12 @@
+/*==============================================================================
+City-specific Analysis: Durham, NC
+Author: Sarah R Aaronson
+Date: March 2025
+Purpose: Calculate treatment intensity for Durham based on the Expanding Housing
+         Choices initiative that expanded middle housing options in residential
+         zones, effective October 15, 2019
+==============================================================================*/
+
 * Check if project directory global is already defined
 if "$projdir" == "" {
     * Define project directory - modify this for your system
@@ -14,79 +23,84 @@ if "$projdir" == "" {
     }
 }
 
-* Define main subdirectories based on your current structure
+* Define main subdirectories
 global raw_data "$projdir/data/raw"
 global processed "$projdir/data/processed"
-global graphs "$projdir/graphs"
-global scripts "$projdir/scripts"
-global scripts_plex_reforms "$projdir/scripts_plex_reforms"
-
-* Define new subdirectories (these will be created)
-global code "$projdir/code"
-global data_cleaning "$code/scripts_plex_reforms/1_data_cleaning"
-global descriptive "$code/scripts_plex_reforms/2_descriptive"
-global analysis "$code/scripts_plex_reforms/3_analysis"
-global event_studies "$code/scripts_plex_reforms/4_event_studies"
-global city_specific "$code/scripts_plex_reforms/5_city_specific"
-global robustness "$code/scripts_plex_reforms/6_robustness"
-
-global output "$projdir/output"
-global tables "$output/tables"
-global figures "$output/figures"
-global results "$output/results"
-
-* Specific paths for data types
-global permits_raw "$raw_data/permits" 
-global permits_processed "$processed/permits"
 global area_data "$processed/area"
-
-* Optionally create directories if they don't exist
-capture mkdir "$code"
-capture mkdir "$data_cleaning"
-capture mkdir "$descriptive" 
-capture mkdir "$analysis"
-capture mkdir "$event_studies"
-capture mkdir "$city_specific"
-capture mkdir "$robustness"
-capture mkdir "$output"
-capture mkdir "$tables"
-capture mkdir "$figures"
-capture mkdir "$results"
 
 * Set preferences
 set more off
 
-import delimited using "${processed}/area/durham_intersection_w_tiers.csv", clear
+/*------------------------------------------------------------------------------
+                           1. DATA PREPARATION
+------------------------------------------------------------------------------*/
+* Import Durham zoning intersection data with tier information
+import delimited using "${area_data}/durham_intersection_w_tiers.csv", clear
 
-ren type tier
+* Rename tier variable for clarity
+rename type tier
 
-gen weight = .
+/*------------------------------------------------------------------------------
+                      2. IDENTIFY RESIDENTIAL ZONES
+------------------------------------------------------------------------------*/
+* Identify residential zones in pre and post reform periods
+gen pre_res = (inlist(udo, "PDR", "PDR 3.969", "RC", "RR", "RS-10", "RS-20", "RS-8", "RS-M", "RU-5") | ///
+               inlist(udo, "RU-5(2)", "RU-M"))
+               
+gen post_res = (inlist(udo_2, "PDR", "PDR 3.969", "RC", "RR", "RS-10", "RS-20", "RS-8", "RS-M", "RU-5") | ///
+                inlist(udo_2, "RU-5(2)", "RU-M")) | (strpos(udo_2, "PDR") > 0)
 
-gen pre_res = (inlist(udo, "PDR", "PDR 3.969", "RC", "RR", "RS-10", "RS-20", "RS-8", "RS-M", "RU-5") | inlist(udo, "RU-5(2)", "RU-M"))
-gen post_res = (inlist(udo_2, "PDR", "PDR 3.969", "RC", "RR", "RS-10", "RS-20", "RS-8", "RS-M", "RU-5") | inlist(udo_2, "RU-5(2)", "RU-M")) | (strpos(udo_2, "PDR") > 0)
-
+* Identify parcels that were residential in both periods
 gen both_res = (pre_res == 1 & post_res == 1)
 
-gen pre_affected = ((inlist(udo, "RS-10", "RS-20", "RS-8", "RU-5") & (tier == "URBAN")) | (udo == "RU-5" & tier == "SUBURBAN"))
-gen post_affected = ((inlist(udo_2, "RS-10", "RS-20", "RS-8", "RU-5") & (tier == "URBAN")) | (udo_2 == "RU-5" & tier == "SUBURBAN"))
+/*------------------------------------------------------------------------------
+                     3. CALCULATE DENSITY CHANGES
+------------------------------------------------------------------------------*/
+* Initialize weight variable
+gen weight = .
 
-replace weight = 2 if (both_res == 1 & (pre_affected == 1 & post_affected == 1)) | (both_res == 1 & post_affected == 1)
+* Identify parcels affected by the reform based on zone and tier
+gen pre_affected = ((inlist(udo, "RS-10", "RS-20", "RS-8", "RU-5") & (tier == "URBAN")) | ///
+                   (udo == "RU-5" & tier == "SUBURBAN"))
+                   
+gen post_affected = ((inlist(udo_2, "RS-10", "RS-20", "RS-8", "RU-5") & (tier == "URBAN")) | ///
+                    (udo_2 == "RU-5" & tier == "SUBURBAN"))
 
-order udo udo_2 weight tier
+* Assign weights based on reform impact
+* Key reform: Allow duplexes (doubling density) in affected zones
+replace weight = 2 if both_res == 1 & post_affected == 1
 
+* Flag non-residential parcels
 replace weight = -1 if both_res == 0
-replace weight = 1 if both_res == 1 & ((pre_affected == 0 & post_affected == 0) | (pre_affected == 1 & post_affected == 0))
 
-** percent of residential land
+* Assign weight of 1 to residential parcels not affected by reform
+replace weight = 1 if both_res == 1 & ((pre_affected == 0 & post_affected == 0) | ///
+                                       (pre_affected == 1 & post_affected == 0))
+
+/*------------------------------------------------------------------------------
+                     4. CALCULATE INTENSITY MEASURE
+------------------------------------------------------------------------------*/
+* Calculate total residential area
 egen tot_res_area = total(area_inter) if both_res == 1
 
+* Calculate each parcel's percentage of total residential land
 gen res_percent = area_inter / tot_res_area if both_res == 1
+
+* Calculate weighted percentage (key intensity metric)
 gen percent_x_weight = res_percent * weight if weight != -1
 
+* Calculate overall intensity measure
 egen intensity = total(percent_x_weight)
 sum intensity
 local intensity = r(mean)
 
+/*------------------------------------------------------------------------------
+                     5. RETURN TREATMENT DATA
+------------------------------------------------------------------------------*/
+* Return values for consolidation script
 return scalar intensity = `intensity'
 return scalar cbsa_code = 20500
 return scalar reform_date = "10/15/2019"
+
+* Save processed data for potential further analysis
+save "${area_data}/durham_parcels_zoning_pre_post", replace

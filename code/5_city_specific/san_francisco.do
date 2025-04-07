@@ -1,3 +1,12 @@
+/*==============================================================================
+City-specific Analysis: San Francisco, CA
+Author: Sarah R Aaronson
+Date: March 2025
+Purpose: Calculate treatment intensity for San Francisco based on Ordinance
+         154-22 that allowed fourplexes citywide in residential districts,
+         effective October 28, 2022
+==============================================================================*/
+
 * Check if project directory global is already defined
 if "$projdir" == "" {
     * Define project directory - modify this for your system
@@ -14,66 +23,64 @@ if "$projdir" == "" {
     }
 }
 
-* Define main subdirectories based on your current structure
+* Define main subdirectories
 global raw_data "$projdir/data/raw"
 global processed "$projdir/data/processed"
-global graphs "$projdir/graphs"
-global scripts "$projdir/scripts"
-global scripts_plex_reforms "$projdir/scripts_plex_reforms"
-
-* Define new subdirectories (these will be created)
-global code "$projdir/code"
-global data_cleaning "$code/scripts_plex_reforms/1_data_cleaning"
-global descriptive "$code/scripts_plex_reforms/2_descriptive"
-global analysis "$code/scripts_plex_reforms/3_analysis"
-global event_studies "$code/scripts_plex_reforms/4_event_studies"
-global city_specific "$code/scripts_plex_reforms/5_city_specific"
-global robustness "$code/scripts_plex_reforms/6_robustness"
-
-global output "$projdir/output"
-global tables "$output/tables"
-global figures "$output/figures"
-global results "$output/results"
-
-* Specific paths for data types
-global permits_raw "$raw_data/permits" 
-global permits_processed "$processed/permits"
 global area_data "$processed/area"
-
-* Optionally create directories if they don't exist
-capture mkdir "$code"
-capture mkdir "$data_cleaning"
-capture mkdir "$descriptive" 
-capture mkdir "$analysis"
-capture mkdir "$event_studies"
-capture mkdir "$city_specific"
-capture mkdir "$robustness"
-capture mkdir "$output"
-capture mkdir "$tables"
-capture mkdir "$figures"
-capture mkdir "$results"
 
 * Set preferences
 set more off
 
-import delimited using "${processed}/area/san_francisco_no_corners.csv", clear
+/*------------------------------------------------------------------------------
+                           1. DATA PREPARATION
+------------------------------------------------------------------------------*/
+* Import San Francisco zoning data (excluding corner parcels for accuracy)
+import delimited using "${area_data}/san_francisco_no_corners.csv", clear
 
+/*------------------------------------------------------------------------------
+                      2. IDENTIFY RESIDENTIAL ZONES
+------------------------------------------------------------------------------*/
+* Identify residential zones
+gen res = (inlist(zoning_code, "RH-1(D)", "RH-1", "RH-1(S)", "RH-2", "RH-3", "RM-1", "RM-2", "RM-3", "RM-4") | ///
+          inlist(zoning_code, "RTO", "RTO-M", "RH-DTR", "SB-DTR", "TB-DTR"))
 
-gen res = (inlist(zoning_code, "RH-1(D)", "RH-1", "RH-1(S)", "RH-2", "RH-3", "RM-1", "RM-2", "RM-3", "RM-4") | inlist(zoning_code, "RTO", "RTO-M", "RH-DTR", "SB-DTR", "TB-DTR"))
+/*------------------------------------------------------------------------------
+                     3. CALCULATE DENSITY CHANGES
+------------------------------------------------------------------------------*/
+* Assign weights based on zone type
+* Key reform: Allow up to 4 units (quadrupling density) in previously single-family zones
 gen weight = 4 if inlist(zoning_code, "RH-1(D)", "RH-1", "RH-1(S)", "RH-2", "RH-3")
+
+* Flag non-residential parcels
 replace weight = -1 if res != 1
+
+* Higher density zones already allowed multi-units, less impact from reform
 replace weight = 1 if res == 1 & missing(weight)
 
-** percent of residential land
+/*------------------------------------------------------------------------------
+                     4. CALCULATE INTENSITY MEASURE
+------------------------------------------------------------------------------*/
+* Calculate total residential area
 egen tot_res_area = total(area) if res == 1
 
+* Calculate each parcel's percentage of total residential land
 gen res_percent = area / tot_res_area if res == 1
+
+* Calculate weighted percentage (key intensity metric)
 gen percent_x_weight = res_percent * weight if weight != -1
 
+* Calculate overall intensity measure
 egen intensity = total(percent_x_weight)
 sum intensity
 local intensity = r(mean)
 
+/*------------------------------------------------------------------------------
+                     5. RETURN TREATMENT DATA
+------------------------------------------------------------------------------*/
+* Return values for consolidation script
 return scalar intensity = `intensity'
 return scalar cbsa_code = 41860
 return scalar reform_date = "10/28/2022"
+
+* Save processed data for potential further analysis
+save "${area_data}/san_francisco_parcels_zoning", replace
