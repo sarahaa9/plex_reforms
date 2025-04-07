@@ -1,3 +1,12 @@
+/*==============================================================================
+City-specific Analysis: Charlottesville, VA
+Author: Sarah R Aaronson
+Date: March 2025
+Purpose: Calculate treatment intensity for Charlottesville based on the
+         comprehensive zoning reform that expanded housing options citywide,
+         effective February 19, 2024
+==============================================================================*/
+
 * Check if project directory global is already defined
 if "$projdir" == "" {
     * Define project directory - modify this for your system
@@ -14,93 +23,94 @@ if "$projdir" == "" {
     }
 }
 
-* Define main subdirectories based on your current structure
+* Define main subdirectories
 global raw_data "$projdir/data/raw"
 global processed "$projdir/data/processed"
-global graphs "$projdir/graphs"
-global scripts "$projdir/scripts"
-global scripts_plex_reforms "$projdir/scripts_plex_reforms"
-
-* Define new subdirectories (these will be created)
-global code "$projdir/code"
-global data_cleaning "$code/scripts_plex_reforms/1_data_cleaning"
-global descriptive "$code/scripts_plex_reforms/2_descriptive"
-global analysis "$code/scripts_plex_reforms/3_analysis"
-global event_studies "$code/scripts_plex_reforms/4_event_studies"
-global city_specific "$code/scripts_plex_reforms/5_city_specific"
-global robustness "$code/scripts_plex_reforms/6_robustness"
-
-global output "$projdir/output"
-global tables "$output/tables"
-global figures "$output/figures"
-global results "$output/results"
-
-* Specific paths for data types
-global permits_raw "$raw_data/permits" 
-global permits_processed "$processed/permits"
 global area_data "$processed/area"
-
-* Optionally create directories if they don't exist
-capture mkdir "$code"
-capture mkdir "$data_cleaning"
-capture mkdir "$descriptive" 
-capture mkdir "$analysis"
-capture mkdir "$event_studies"
-capture mkdir "$city_specific"
-capture mkdir "$robustness"
-capture mkdir "$output"
-capture mkdir "$tables"
-capture mkdir "$figures"
-capture mkdir "$results"
 
 * Set preferences
 set more off
 
-import delimited using "${processed}/area/charlottesville_intersection.csv", clear
+/*------------------------------------------------------------------------------
+                           1. DATA PREPARATION
+------------------------------------------------------------------------------*/
+* Import Charlottesville zoning intersection data
+import delimited using "${area_data}/charlottesville_intersection.csv", clear
 
+* Rename variables for consistency
 ren zoning zoning_post
 ren zoning_code zoning_pre
 
-order zoning_post zoning_pre area_intersection
+/*------------------------------------------------------------------------------
+                      2. IDENTIFY RESIDENTIAL ZONES
+------------------------------------------------------------------------------*/
+* Identify pre-reform residential zones
+gen pre_res = (strpos(zoning_pre, "R-1") | strpos(zoning_pre, "R-2") | ///
+               strpos(zoning_pre, "R-3") | inlist(zoning_pre, "MR", "UHD", "UMD"))
 
-drop zone
-
-gen pre_res = (strpos(zoning_pre, "R-1") | strpos(zoning_pre, "R-2") | strpos(zoning_pre, "R-3") | inlist(zoning_pre, "MR", "UHD", "UMD"))
+* Identify post-reform residential zones
 gen post_res = (inlist(zoning_post, "R-A", "R-B", "R-C", "RN-A"))
 
+* Identify parcels that were residential in both periods
 gen both_res = (pre_res & post_res)
 
+/*------------------------------------------------------------------------------
+                     3. CALCULATE DENSITY CHANGES
+------------------------------------------------------------------------------*/
+* Calculate starting density based on zone type
 gen start_density = .
 replace start_density = 1 if strpos(zoning_pre, "R-1")
 replace start_density = 2 if strpos(zoning_pre, "R-2")
+
+* Calculate density based on acreage for certain zones
 gen acres = area_intersection * 0.000247105
 replace start_density = 21 * acres if strpos(zoning_pre, "R-3") | zoning_pre == "MR"
 replace start_density = 64 * acres if zoning_pre == "UHD"
 replace start_density = 43 * acres if zoning_pre == "UMD"
 
+* Ensure minimum density of 1 unit
 replace start_density = 1 if start_density < 1
 
+* Calculate ending density based on zone type
 gen end_density = .
-replace end_density = 3 if zoning_post == "R-A"
-replace end_density = 6 if zoning_post == "R-B"
-replace end_density = 8 if zoning_post == "R-C"
-replace end_density = 1 if zoning_post == "RN-A"
+replace end_density = 3 if zoning_post == "R-A"  // Allow up to triplex
+replace end_density = 6 if zoning_post == "R-B"  // Medium density
+replace end_density = 8 if zoning_post == "R-C"  // Higher density
+replace end_density = 1 if zoning_post == "RN-A" // Neighborhood residential
 
+* Calculate weight (density change ratio)
 gen weight = end_density / start_density
 
-order *_res weight, after(area_intersection)
-
-sum weight
-
+* Flag non-residential parcels
 replace weight = -1 if both_res == 0
 
-** percent of residential land
+/*------------------------------------------------------------------------------
+                     4. CALCULATE INTENSITY MEASURE
+------------------------------------------------------------------------------*/
+* Calculate total residential area
 egen tot_res_area = total(area_intersection) if both_res == 1
 
+* Calculate each parcel's percentage of total residential land
 gen res_percent = area_intersection / tot_res_area if both_res == 1
+
+* Calculate weighted percentage (key intensity metric)
 gen percent_x_weight = res_percent * weight if weight != -1
 
+* Calculate overall intensity measure
 egen intensity = total(percent_x_weight)
 sum intensity
+local intensity = r(mean)
 
+* Check for missing weights (should be 0)
 count if missing(weight)
+
+/*------------------------------------------------------------------------------
+                     5. RETURN TREATMENT DATA
+------------------------------------------------------------------------------*/
+* Return values for consolidation script
+return scalar intensity = `intensity'
+return scalar cbsa_code = 16820
+return scalar reform_date = "2/19/2024"
+
+* Save processed data for potential further analysis
+save "${area_data}/charlottesville_parcels_zoning", replace
