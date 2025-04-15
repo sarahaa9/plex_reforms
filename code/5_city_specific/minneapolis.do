@@ -43,6 +43,9 @@ drop APN
 format pin_clean %13.0f
 rename pin_clean pin
 
+ren * *_2018
+ren pin_2018 pin
+
 * Save pre-reform data
 tempfile pre
 save `pre'
@@ -143,13 +146,16 @@ egen intensity = total(percent_x_weight)
 sum intensity
 local intensity = r(mean)
 
+* Check for missing weights (should be 0)
+count if missing(weight)
+
 /*------------------------------------------------------------------------------
                      5. RETURN TREATMENT DATA
 ------------------------------------------------------------------------------*/
 * Return values for consolidation script
-return scalar intensity = `intensity'
-return scalar cbsa_code = 33460
-return scalar reform_date = "1/1/2020"
+global intensity = `intensity'
+global cbsa = 33460
+global reform_date "1/1/2020"
 
 * Save processed data for potential further analysis
 save "${area_data}/mpls_parcels_zoning_pre_post", replace

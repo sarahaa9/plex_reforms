@@ -74,13 +74,16 @@ egen intensity = total(percent_x_weight)
 sum intensity
 local intensity = r(mean)
 
+* Check for missing weights (should be 0)
+count if missing(weight)
+
 /*------------------------------------------------------------------------------
                      5. RETURN TREATMENT DATA
 ------------------------------------------------------------------------------*/
 * Return values for consolidation script
-return scalar intensity = `intensity'
-return scalar cbsa_code = 41860
-return scalar reform_date = "10/28/2022"
+global intensity = `intensity'
+global cbsa = 41860
+global reform_date "10/28/2022"
 
 * Save processed data for potential further analysis
 save "${area_data}/san_francisco_parcels_zoning", replace

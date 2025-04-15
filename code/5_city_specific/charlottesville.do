@@ -108,9 +108,12 @@ count if missing(weight)
                      5. RETURN TREATMENT DATA
 ------------------------------------------------------------------------------*/
 * Return values for consolidation script
-return scalar intensity = `intensity'
-return scalar cbsa_code = 16820
-return scalar reform_date = "2/19/2024"
+global intensity = `intensity'
+global cbsa = 16820
+global reform_date "2/19/2024"
+
+di in red "reform date is ${reform_date}"
+pause
 
 * Save processed data for potential further analysis
 save "${area_data}/charlottesville_parcels_zoning", replace

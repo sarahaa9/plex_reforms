@@ -98,9 +98,9 @@ local intensity = r(mean)
                      5. RETURN TREATMENT DATA
 ------------------------------------------------------------------------------*/
 * Return values for consolidation script
-return scalar intensity = `intensity'
-return scalar cbsa_code = 20500
-return scalar reform_date = "10/15/2019"
+global intensity = `intensity'
+global cbsa = 20500
+global reform_date "10/15/2019"
 
 * Save processed data for potential further analysis
 save "${area_data}/durham_parcels_zoning_pre_post", replace

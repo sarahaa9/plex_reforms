@@ -24,7 +24,7 @@ global scripts "$projdir/scripts"
 global scripts_plex_reforms "$projdir/scripts_plex_reforms"
 
 * Define new subdirectories (these will be created)
-global code "$projdir/code"
+global code "$projdir/plex_reforms/code"
 global data_cleaning "$code/scripts_plex_reforms/1_data_cleaning"
 global descriptive "$code/scripts_plex_reforms/2_descriptive"
 global analysis "$code/scripts_plex_reforms/3_analysis"
@@ -66,19 +66,45 @@ gen city_name = ""
 gen treat_intens = .
 gen reform_month = .
 gen reform_year = .
-gen reform_date = .
+gen reform_date = ""
+gen reform_date_num = .
 gen notes = ""
 save "${processed}/treatment_intensities.dta", replace
 
 * Loop through each city and calculate intensities
-foreach city in "durham" "minneapolis" "portland" "raleigh" "san_francisco" "spokane" "walla_walla" {
-    * Run city-specific calculation
-    do "${code}/5_city_specific/`city'.do"
+foreach city in "charlottesville" "durham" "minneapolis" "portland" "raleigh" "san_francisco" "spokane" "walla_walla" {
+    * Display progress
+    display as text "Processing `city'..."
     
+    * Run city-specific calculation
+    noisily do "${code}/5_city_specific/`city'.do"
+
     * Capture the calculated intensity
-    local intensity = r(intensity)
-    local cbsa_code = r(cbsa_code)
-    local reform_date = r(reform_date)
+    local intensity = ${intensity}
+    local cbsa_code = ${cbsa}
+    local reform_date ${reform_date}
+
+    * Check if script executed successfully
+    if _rc != 0 {
+        display as error "Error running `city'.do: " _rc
+        continue
+    }
+    
+    * Check if values were returned properly
+    if missing(`intensity') {
+        display as error "Error: No intensity value returned from `city'.do"
+        continue
+    }
+    
+    if missing(`cbsa_code') {
+        display as error "Error: No CBSA code returned from `city'.do"
+        continue
+    }
+    
+    if "`reform_date'" == "" {
+        display as error "Error: No reform date returned from `city'.do"
+        continue
+    }
     
     * Add to the consolidated dataset
     preserve
@@ -87,11 +113,21 @@ foreach city in "durham" "minneapolis" "portland" "raleigh" "san_francisco" "spo
         gen cbsa = `cbsa_code'
         gen city_name = "`city'"
         gen treat_intens = `intensity'
+        gen reform_date = "`reform_date'"
+
+        di in red "reform date is `reform_date'"
+        pause
+        
+        * Parse date components
         gen reform_month = month(date("`reform_date'", "MDY"))
         gen reform_year = year(date("`reform_date'", "MDY"))
-        gen reform_date = date("`reform_date'", "MDY")
-        format reform_date %td
+        gen reform_date_num = date("`reform_date'", "MDY")
+        format reform_date_num %td
+        
         gen notes = "`city' intensity calculated on `c(current_date)'"
+        
+        * Display city information
+        display as result "City: `city', CBSA: `cbsa_code', Intensity: `intensity', Reform date: `reform_date'"
         
         append using "${processed}/treatment_intensities.dta"
         save "${processed}/treatment_intensities.dta", replace
@@ -99,16 +135,26 @@ foreach city in "durham" "minneapolis" "portland" "raleigh" "san_francisco" "spo
 }
 
 * Add metadata
+use "${processed}/treatment_intensities.dta", clear
+
+* Label variables
 label var cbsa "CBSA Code"
 label var city_name "City Name"
 label var treat_intens "Treatment Intensity"
 label var reform_month "Reform Month"
 label var reform_year "Reform Year"
-label var reform_date "Reform Date"
+label var reform_date "Reform Date (String)"
+label var reform_date_num "Reform Date (Stata Date)"
 label var notes "Notes"
+
+* Add a data note explaining the intensity measure
+notes treat_intens: "Treatment intensity measures the weighted average increase in density allowed by zoning reform. A value of 2 means density doubled on average, 3 means tripled, etc."
 
 * Export to Excel for reference
 export excel using "${output}/tables/treatment_intensities.xlsx", firstrow(variables) replace
+
+display as result "Treatment intensities consolidated successfully!"
+display as result "Results saved to ${processed}/treatment_intensities.dta"
 
 * Return the dataset for immediate use
 use "${processed}/treatment_intensities.dta", clear
